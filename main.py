@@ -31,3 +31,5 @@ if __name__ == "__main__":
         "🎬 CGV 용산 IMAX 예매 오픈!", 
         "지금 바로 CGV 앱을 켜서 예매를 진행하세요!"
     )
+
+    # 터미널 테스트 : python main.py
