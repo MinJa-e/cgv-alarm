@@ -86,7 +86,7 @@ def check_cgv_imax(target_date):
 # ----------------------------------------------------
 if __name__ == "__main__":
     # 🔴 모니터링할 날짜 설정 (YYYYMMDD)
-    TARGET_DATE = "20260901" 
+    TARGET_DATE = "20260902" 
     
     print(f"🚀 [CGV 용산 IMAX] {TARGET_DATE} 예매 감시를 시작합니다...")
     
