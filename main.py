@@ -24,7 +24,7 @@ TARGET_MOVIES = {
 }
 
 CHECK_DAYS = 30
-CHECK_INTERVAL = 300  # 5분
+CHECK_INTERVAL = 10  # 5분
 
 TOKEN_FILE = "tokens.json"
 STATE_FILE = "notified.json"
