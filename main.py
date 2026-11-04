@@ -125,15 +125,13 @@ def check_cgv_imax(target_date):
         "Referer": "https://cgv.co.kr/",
     }
 
-response = requests.get(
-    API_URL,
-    params=params,
-    headers=headers,
-    timeout=(5, 15)
-)
-
+    response = requests.get(
+        API_URL,
+        params=params,
+        headers=headers,
+        timeout=(5, 15)
+    )
     response.raise_for_status()
-
     result = response.json()
 
     if result.get("statusCode") != 0:
