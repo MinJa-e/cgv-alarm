@@ -66,30 +66,30 @@ def check_cgv_imax(target_date):
         )
     }
 
-    try:
-        response = requests.get(
-            url,
-            params=params,
-            headers=headers,
-            timeout=15
-        )
+try:
+    response = requests.get(
+        url,
+        params=params,
+        headers=headers,
+        timeout=15
+    )
 
-        response.raise_for_status()
+    response.raise_for_status()
 
-# CGV에서 받은 원본 HTML 저장
-with open("cgv_debug.html", "w", encoding="utf-8") as f:
-    f.write(response.text)
+    # CGV 원본 HTML 저장
+    with open("cgv_debug.html", "w", encoding="utf-8") as f:
+        f.write(response.text)
 
-soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response.text, "html.parser")
 
-print("응답 HTML 길이:", len(response.text))
-print("IMAX 상영관 목록:", len(
-    soup.select("div.sect-showtimes > ul > li")
-))
-print("듄 1편 포함 여부:", "듄" in response.text)
-print("듄 2편 포함 여부:", "듄: 파트 2" in response.text)
+    print("응답 HTML 길이:", len(response.text))
+    print("IMAX 상영관 목록:", len(
+        soup.select("div.sect-showtimes > ul > li")
+    ))
+    print("듄 1편 포함 여부:", "듄" in response.text)
+    print("듄 2편 포함 여부:", "듄: 파트 2" in response.text)
 
-        hall_list = soup.select("div.sect-showtimes > ul > li")
+    hall_list = soup.select("div.sect-showtimes > ul > li")
 
         for hall in hall_list:
 
