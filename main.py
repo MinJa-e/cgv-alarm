@@ -48,6 +48,7 @@ def send_push_notification(title, body):
 # 2. CGV 용산 IMAX 예매 감시 함수
 # ----------------------------------------------------
 
+
 def check_cgv_imax(target_date):
 
     url = "https://www.cgv.co.kr/common/showtimes/iframeTheater.aspx"
@@ -59,37 +60,34 @@ def check_cgv_imax(target_date):
     }
 
     headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/120.0.0.0 Safari/537.36"
-        )
+        "User-Agent": "Mozilla/5.0"
     }
 
-try:
-    response = requests.get(
-        url,
-        params=params,
-        headers=headers,
-        timeout=15
-    )
+    try:
+        response = requests.get(
+            url,
+            params=params,
+            headers=headers,
+            timeout=15
+        )
 
-    response.raise_for_status()
+        response.raise_for_status()
 
-    # CGV 원본 HTML 저장
-    with open("cgv_debug.html", "w", encoding="utf-8") as f:
-        f.write(response.text)
+        # CGV 원본 HTML 저장
+        with open("cgv_debug.html", "w", encoding="utf-8") as f:
+            f.write(response.text)
 
-    soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.text, "html.parser")
 
-    print("응답 HTML 길이:", len(response.text))
-    print("IMAX 상영관 목록:", len(
-        soup.select("div.sect-showtimes > ul > li")
-    ))
-    print("듄 1편 포함 여부:", "듄" in response.text)
-    print("듄 2편 포함 여부:", "듄: 파트 2" in response.text)
+        print("응답 HTML 길이:", len(response.text))
+        print(
+            "IMAX 상영관 목록:",
+            len(soup.select("div.sect-showtimes > ul > li"))
+        )
+        print("듄 1편 포함 여부:", "듄" in response.text)
+        print("듄 2편 포함 여부:", "듄: 파트 2" in response.text)
 
-    hall_list = soup.select("div.sect-showtimes > ul > li")
+        hall_list = soup.select("div.sect-showtimes > ul > li")
 
         for hall in hall_list:
 
@@ -115,6 +113,7 @@ try:
     except Exception as e:
         print(f"⚠️ 데이터 확인 오류: {e}")
         return None
+
 
 
 # ----------------------------------------------------
