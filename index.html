@@ -46,19 +46,13 @@
           // 서비스 워커 등록
           await navigator.serviceWorker.register('./sw.js');
 
-          // 서비스 워커가 실제로 활성화될 때까지 대기
+          // 서비스 워커가 실제로 활성화될 때까지 대기 
           const registration = await navigator.serviceWorker.ready;
 
           // 푸시 토큰 생성
-          const token = await getToken(messaging, {
-            vapidKey: 'BATUVtjMOFvitJh_KgWCFLqvEpUVAXxoHK5M5RjqBu3oJJ4Jo8Rm16HneTOAA3aVEtjsin-rHdcrRS4RRXvtT52s',
-            serviceWorkerRegistration: registration
-          });
-
-          // 🔴 [수정 필요] Firebase 클라우드 메시징 탭에서 생성한 '웹 푸시 인증서(VAPID Key)'를 넣으세요.
-          const token = await getToken(messaging, {
-            vapidKey: 'BATUVtjMOFvitJh_KgWCFLqvEpUVAXxoHKM5RjqBu3oJJ4Jo8Rm16HneTOAA3aVEtjsin-rHdcrRS4RRXvtT52s',
-            serviceWorkerRegistration: registration
+          const fcmToken = await getToken(messaging, {
+              vapidKey: 'BATUVtjMOFvitJh_KgWCFLqvEpUVAXxoHK5M5RjqBu3oJJ4Jo8Rm16HneTOAA3aVEtjsin-rHdcrRS4RRXvtT52s',
+              serviceWorkerRegistration: registration
           });
 
           document.getElementById('token-box').innerHTML =
