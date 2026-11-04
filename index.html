@@ -1,20 +1,24 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CGV 용산 IMAX 알리미</title>
   <link rel="manifest" href="/manifest.json">
 </head>
+
 <body style="text-align:center; padding: 40px 20px; font-family: sans-serif; background-color: #f9f9f9;">
   <h1 style="color: #e50914;">🎬 용산 IMAX 알리미</h1>
   <p>아이폰/안드로이드 홈 화면에 추가 후 이용해 주세요.</p>
-  
-  <button id="sub-btn" style="padding: 15px 30px; font-size: 18px; cursor: pointer; background: #e50914; color: #fff; border: none; border-radius: 8px; font-weight: bold; margin-top: 20px;">
+
+  <button id="sub-btn"
+    style="padding: 15px 30px; font-size: 18px; cursor: pointer; background: #e50914; color: #fff; border: none; border-radius: 8px; font-weight: bold; margin-top: 20px;">
     🔔 IMAX 알림 신청하기
   </button>
 
-  <div id="token-box" style="margin-top: 30px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 8px; word-break: break-all; font-size: 14px; text-align: left;">
+  <div id="token-box"
+    style="margin-top: 30px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 8px; word-break: break-all; font-size: 14px; text-align: left;">
     알림 신청 버튼을 누르면 여기에 토큰이 생성됩니다.
   </div>
 
@@ -39,15 +43,25 @@
       try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-          const registration = await navigator.serviceWorker.register('./sw.js');
-          
-          // 🔴 [수정 필요] Firebase 클라우드 메시징 탭에서 생성한 '웹 푸시 인증서(VAPID Key)'를 넣으세요.
-          const token = await getToken(messaging, { 
-            vapidKey: 'BATUVtjMOFvitJh_KgWCFLqvEpUVAXxoHKM5RjqBu3oJJ4Jo8Rm16HneTOAA3aVEtjsin-rHdcrRS4RRXvtT52s',
-            serviceWorkerRegistration: registration 
+          // 서비스 워커 등록
+          await navigator.serviceWorker.register('./sw.js');
+
+          // 서비스 워커가 실제로 활성화될 때까지 대기
+          const registration = await navigator.serviceWorker.ready;
+
+          // 푸시 토큰 생성
+          const token = await getToken(messaging, {
+            vapidKey: 'BATUVtjMOFvitJh_KgWCFLqvEpUVAXxoHK5M5RjqBu3oJJ4Jo8Rm16HneTOAA3aVEtjsin-rHdcrRS4RRXvtT52s',
+            serviceWorkerRegistration: registration
           });
-          
-          document.getElementById('token-box').innerHTML = 
+
+          // 🔴 [수정 필요] Firebase 클라우드 메시징 탭에서 생성한 '웹 푸시 인증서(VAPID Key)'를 넣으세요.
+          const token = await getToken(messaging, {
+            vapidKey: 'BATUVtjMOFvitJh_KgWCFLqvEpUVAXxoHKM5RjqBu3oJJ4Jo8Rm16HneTOAA3aVEtjsin-rHdcrRS4RRXvtT52s',
+            serviceWorkerRegistration: registration
+          });
+
+          document.getElementById('token-box').innerHTML =
             `<b>✅ 알림 등록 성공! 아래 토큰을 카톡 등으로 보내주세요:</b><br><br><code>${token}</code>`;
         } else {
           alert('알림 권한이 거부되었습니다. 설정에서 알림을 허용해주세요.');
@@ -58,4 +72,5 @@
     });
   </script>
 </body>
+
 </html>
