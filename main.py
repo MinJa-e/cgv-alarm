@@ -12,6 +12,7 @@ firebase_admin.initialize_app(cred)
 USER_FCM_TOKENS = [
     "cs_tn9sT-krm5ocHfOzGkL:APA91bFq-JN0NaVeKYHg-Zi4Hjem5K6irdQN5xEsogz7TugJ0kS-lDolcZ5wxaw2aejSKj_mdjmY4ge5mXxa5j-iL6LqrrJEW_9lXc846y1LignEsNHkhMo",
     "fUxaqBzJqMC6ajwbZ-Y664:APA91bEKAU2_4KUZ2_DFm_JP0JYGO13Mng2nhpikdMSvs9LpmUXOK_oFwX8RpXBMvcM1ri8wOzJsII0MPErFH_b5ax7skiYp0uqxhh7QSiFWIU9S4vNeEdY",
+    "c9niqt92qVBZrQDHTq-tKi:APA91bGgtO9-50SK3ohGg4_3_O-wGFzRpd5uVyccf6RAYiY4X02QOGb_j29FfmFpLhjUMqK_EpRl_A-yyimrKJvC3ZYAl01wzL2E4939oidBPhlm2JX6OC8"
     # 필요하면 세번째, 네번째 계속 추가 가능
 ]
 
