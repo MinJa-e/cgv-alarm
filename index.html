@@ -50,7 +50,7 @@
           const registration = await navigator.serviceWorker.ready;
 
           // 푸시 토큰 생성
-          const fcmToken = await getToken(messaging, {
+          const token = await getToken(messaging, {
               vapidKey: 'BATUVtjMOFvitJh_KgWCFLqvEpUVAXxoHK5M5RjqBu3oJJ4Jo8Rm16HneTOAA3aVEtjsin-rHdcrRS4RRXvtT52s',
               serviceWorkerRegistration: registration
           });
