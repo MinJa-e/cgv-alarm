@@ -1,0 +1,15 @@
+{
+  "theaters": [
+    {
+      "name": "용산아이파크몰",
+      "site_no": "0013",
+      "screen_nos": []
+    }
+  ],
+  "movies": [
+    "듄",
+    "듄:파트2"
+  ],
+  "check_days": 15,
+  "check_interval": 15
+}

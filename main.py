@@ -15,19 +15,26 @@ from firebase_admin import credentials, messaging
 
 API_URL = "https://cgv.co.kr/api/v1/booking/searchMovScnInfo"
 
-SITE_NO = "0013"
-IMAX_SCREEN_NO = "018"
-
-TARGET_MOVIES = {
-    "듄",
-    "듄:파트2",
-}
-
-CHECK_DAYS = 30
-CHECK_INTERVAL = 15  # 5분
-
 TOKEN_FILE = "tokens.json"
 STATE_FILE = "notified.json"
+CONFIG_FILE = "config.json"
+
+
+# -----------------------------
+# 설정 파일 읽기
+# -----------------------------
+
+def load_config():
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+config = load_config()
+
+THEATERS = config["theaters"]
+TARGET_MOVIES = config["movies"]
+CHECK_DAYS = config.get("check_days", 30)
+CHECK_INTERVAL = config.get("check_interval", 300)
 
 
 # -----------------------------
@@ -82,6 +89,8 @@ def send_push_notification(title, body):
         f"성공 {response.success_count}, "
         f"실패 {response.failure_count}"
     )
+
+
 # -----------------------------
 # 디스코드 알림
 # -----------------------------
@@ -110,34 +119,37 @@ def send_discord_notification(title, body):
     except requests.RequestException as e:
         print(f"⚠️ 디스코드 알림 발송 실패: {e}")
 
+
 # -----------------------------
 # 영화 제목 판별
 # -----------------------------
 
 def normalize_title(title):
-    return "".join(title.split()).replace("：", ":")
+    return (
+        "".join(str(title).upper().split())
+        .replace("：", "")
+        .replace(":", "")
+        .replace("-", "")
+    )
 
 
 def is_target_movie(title):
-    normalized = "".join(title.upper().split())
-    normalized = normalized.replace("：", ":").replace("-", ":")
+    normalized = normalize_title(title)
 
-    # 듄 2편을 먼저 판별
-    if "파트2" in normalized or "PART2" in normalized:
-        return "듄" in normalized or "DUNE" in normalized
-
-    # 1편은 제목이 듄 또는 DUNE인 경우
-    return normalized in {"듄", "DUNE"}
+    return any(
+        normalized == normalize_title(target)
+        for target in TARGET_MOVIES
+    )
 
 
 # -----------------------------
 # CGV 상영 정보 조회
 # -----------------------------
 
-def check_cgv_imax(target_date):
+def check_cgv_theater(theater, target_date):
     params = {
         "coCd": "A420",
-        "siteNo": SITE_NO,
+        "siteNo": theater["site_no"],
         "scnYmd": target_date,
         "rtctlScopCd": "08"
     }
@@ -157,6 +169,7 @@ def check_cgv_imax(target_date):
         headers=headers,
         timeout=(5, 15)
     )
+
     response.raise_for_status()
     result = response.json()
 
@@ -166,8 +179,15 @@ def check_cgv_imax(target_date):
 
     screenings = []
 
+    # 빈 배열이면 모든 상영관 허용
+    screen_nos = [
+        str(no) for no in theater.get("screen_nos", [])
+    ]
+
     for item in result.get("data", []):
-        if item.get("scnsNo") != IMAX_SCREEN_NO:
+        screen_no = str(item.get("scnsNo", ""))
+
+        if screen_nos and screen_no not in screen_nos:
             continue
 
         movie_name = item.get("movNm", "").strip()
@@ -190,63 +210,88 @@ def check_new_screenings():
 
     today = date.today()
 
-    for offset in range(CHECK_DAYS):
-        target_date = (
-            today + timedelta(days=offset)
-        ).strftime("%Y%m%d")
+    for theater in THEATERS:
+        theater_name = theater["name"]
+        site_no = str(theater["site_no"])
 
-        try:
-            screenings = check_cgv_imax(target_date)
+        print(f"\n🏢 {theater_name} 확인 시작")
 
-            if screenings is None:
-                continue
+        for offset in range(CHECK_DAYS):
+            target_date = (
+                today + timedelta(days=offset)
+            ).strftime("%Y%m%d")
 
-            for item in screenings:
-                movie_name = item.get("movNm", "").strip()
-                screen_name = item.get("scnsNm", "")
-                sequence = item.get("scnSseq", "")
-                start_time = item.get("scnsrtTm", "")
+            try:
+                screenings = check_cgv_theater(
+                    theater,
+                    target_date
+                )
 
-                # 회차별 고유 식별값
-                unique_key = "|".join([
-                    target_date,
-                    item.get("prodNo", ""),
-                    item.get("scnsNo", ""),
-                    sequence,
-                    start_time
-                ])
-
-                if unique_key in notified_set:
+                if screenings is None:
                     continue
 
-                formatted_time = (
-                    start_time[:2] + ":" + start_time[2:]
-                    if len(start_time) == 4
-                    else start_time
-                )
+                for item in screenings:
+                    movie_name = item.get("movNm", "").strip()
+                    screen_name = item.get("scnsNm", "")
+                    sequence = item.get("scnSseq", "")
+                    start_time = item.get("scnsrtTm", "")
 
-                title = f"듄 IMAX 예매 알림!"
-                body = (
-                    f"{movie_name} / {screen_name}\n"
-                    f"{target_date} {formatted_time} "
-                    f"{sequence}회차"
-                )
+                    # 지점까지 포함한 회차별 고유 식별값
+                    unique_key = "|".join([
+                        site_no,
+                        target_date,
+                        item.get("prodNo", ""),
+                        str(item.get("scnsNo", "")),
+                        str(sequence),
+                        str(start_time)
+                    ])
 
-                print("🎬 신규 회차 발견:", body)
+                    # 기존 용산 IMAX 알림 기록도 확인
+                    legacy_key = "|".join([
+                        target_date,
+                        item.get("prodNo", ""),
+                        str(item.get("scnsNo", "")),
+                        str(sequence),
+                        str(start_time)
+                    ])
 
-                send_push_notification(title, body)
-                send_discord_notification(title, body)
+                    if (
+                        unique_key in notified_set
+                        or (
+                            site_no == "0013"
+                            and legacy_key in notified_set
+                        )
+                    ):
+                        continue
 
-                notified_set.add(unique_key)
-                notified.append(unique_key)
+                    formatted_time = (
+                        start_time[:2] + ":" + start_time[2:]
+                        if len(start_time) == 4
+                        else start_time
+                    )
 
-                save_json(STATE_FILE, notified)
+                    title = f"{movie_name} 상영 알림!"
+                    body = (
+                        f"{theater_name} / {screen_name}\n"
+                        f"{target_date} {formatted_time} "
+                        f"{sequence}회차"
+                    )
 
-        except requests.RequestException as e:
-            print(f"⚠️ {target_date} CGV 요청 실패: {e}")
+                    print("🎬 신규 회차 발견:", body)
 
-        except Exception as e:
-            print(f"⚠️ {target_date} 처리 오류: {e}")
+                    send_push_notification(title, body)
+                    send_discord_notification(title, body)
+
+                    notified_set.add(unique_key)
+                    notified.append(unique_key)
+
+                    save_json(STATE_FILE, notified)
+
+            except requests.RequestException as e:
+                print(f"⚠️ {theater_name} {target_date} 요청 실패: {e}")
+
+            except Exception as e:
+                print(f"⚠️ {theater_name} {target_date} 처리 오류: {e}")
 
 
 # -----------------------------
@@ -254,12 +299,23 @@ def check_new_screenings():
 # -----------------------------
 
 if __name__ == "__main__":
-    print("🚀 듄 1편 / 2편 용산 IMAX 감시 시작")
+    print("🚀 CGV 전체 상영관 감시 시작")
+
+    print("감시 지점:")
+    for theater in THEATERS:
+        print(f"- {theater['name']}")
+
+    print("감시 영화:", ", ".join(TARGET_MOVIES))
+    print(f"확인 기간: {CHECK_DAYS}일")
+    print(f"확인 간격: {CHECK_INTERVAL}초")
 
     while True:
         print("\n🔎 CGV 상영 정보 확인 중...")
 
         check_new_screenings()
 
-        print(f"⏳ {CHECK_INTERVAL}초 후 다시 확인합니다.")
+        print(
+            f"⏳ {CHECK_INTERVAL}초 후 다시 확인합니다."
+        )
+
         time.sleep(CHECK_INTERVAL)
