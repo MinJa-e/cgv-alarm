@@ -24,7 +24,7 @@ TARGET_MOVIES = {
 }
 
 CHECK_DAYS = 30
-CHECK_INTERVAL = 10  # 5분
+CHECK_INTERVAL = 15  # 5분
 
 TOKEN_FILE = "tokens.json"
 STATE_FILE = "notified.json"
@@ -82,7 +82,33 @@ def send_push_notification(title, body):
         f"성공 {response.success_count}, "
         f"실패 {response.failure_count}"
     )
+# -----------------------------
+# 디스코드 알림
+# -----------------------------
 
+def send_discord_notification(title, body):
+    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+
+    if not webhook_url:
+        print("⚠️ 디스코드 웹훅 URL이 설정되지 않았습니다.")
+        return
+
+    payload = {
+        "username": "CGV 알림봇",
+        "content": f"🎬 **{title}**\n{body}"
+    }
+
+    try:
+        response = requests.post(
+            webhook_url,
+            json=payload,
+            timeout=10
+        )
+        response.raise_for_status()
+        print("💬 디스코드 알림 발송 성공!")
+
+    except requests.RequestException as e:
+        print(f"⚠️ 디스코드 알림 발송 실패: {e}")
 
 # -----------------------------
 # 영화 제목 판별
@@ -209,6 +235,7 @@ def check_new_screenings():
                 print("🎬 신규 회차 발견:", body)
 
                 send_push_notification(title, body)
+                send_discord_notification(title, body)
 
                 notified_set.add(unique_key)
                 notified.append(unique_key)
